@@ -13,40 +13,38 @@ const multiplayer = {
     init: function() {
         console.log("Initializing multiplayer functionality");
         
-        // Check if Firebase is loaded
-        if (typeof firebase === 'undefined') {
-            console.error("Firebase not loaded. Make sure firebase scripts are included before multiplayer.js");
-            this.showToast("Firebase not loaded. Check console for details.", "error");
-            return;
-        }
-        
-        // Check if auth and database are available
-        if (!firebase.auth || !firebase.database) {
-            console.error("Firebase auth or database not loaded. Make sure all required Firebase modules are included.");
-            this.showToast("Firebase modules missing. Check console for details.", "error");
-            return;
-        }
-        
-        // Get references to Firebase services
-        const auth = firebase.auth();
-        const database = firebase.database();
-        
-        // Set up Firebase authentication (anonymous)
-        auth.signInAnonymously()
-            .then((userCredential) => {
-                this.userId = userCredential.user.uid;
-                console.log("Anonymous auth successful, userId:", this.userId);
-            })
-            .catch((error) => {
-                console.error("Authentication error:", error);
-                this.showToast("Authentication error. Please try again.", "error");
-            });
+        try {
+            // Check if Firebase is properly loaded
+            if (typeof firebase === 'undefined') {
+                console.error("Firebase is not defined. Make sure Firebase scripts are loaded properly.");
+                return;
+            }
             
-        // Set up event listeners for multiplayer buttons
-        this.setupEventListeners();
-        
-        // Set up toast notification container
-        this.setupToastContainer();
+            console.log("Firebase detected, checking Firebase Auth...");
+            
+            // Try to initialize Firebase Auth
+            const firebaseAuth = firebase.auth();
+            console.log("Firebase Auth initialized successfully");
+            
+            // Set up Firebase authentication (anonymous)
+            firebaseAuth.signInAnonymously()
+                .then((userCredential) => {
+                    this.userId = userCredential.user.uid;
+                    console.log("Anonymous auth successful, userId:", this.userId);
+                })
+                .catch((error) => {
+                    console.error("Authentication error:", error);
+                    this.showToast("Authentication error. Please try again.", "error");
+                });
+                
+            // Set up event listeners for multiplayer buttons
+            this.setupEventListeners();
+            
+            // Set up toast notification container
+            this.setupToastContainer();
+        } catch (error) {
+            console.error("Error initializing multiplayer:", error);
+        }
     },
     
     // Set up event listeners for multiplayer-specific buttons
@@ -112,128 +110,138 @@ const multiplayer = {
     
     // Create a new multiplayer game
     createGame: function() {
-        if (!this.userId) {
-            this.showToast("Authentication error. Please try again.", "error");
-            return;
-        }
-        
-        // Get form values
-        const hostName = document.getElementById("host-name").value;
-        const questionSet = document.getElementById("mp-question-set").value;
-        const difficulty = document.getElementById("mp-difficulty").value;
-        
-        // Generate a random 6-letter game code
-        const gameCode = this.generateGameCode();
-        
-        // Set up game data
-        const gameData = {
-            host: this.userId,
-            hostName: hostName,
-            status: "waiting",
-            settings: {
-                questionSet: questionSet,
-                difficulty: difficulty
-            },
-            createdAt: firebase.database.ServerValue.TIMESTAMP,
-            players: {}
-        };
-        
-        // Add the host as a player
-        gameData.players[this.userId] = {
-            name: hostName,
-            character: "",  // Will be set later in character selection
-            score: 0,
-            correctAnswers: 0,
-            isHost: true,
-            joinedAt: firebase.database.ServerValue.TIMESTAMP,
-            connected: true
-        };
-        
-        // Create the game in Firebase
-        this.gameRef = database.ref(`quizquest/games/${gameCode}`);
-        
-        this.gameRef.set(gameData)
-            .then(() => {
-                console.log("Game created successfully with code:", gameCode);
-                this.gameId = gameCode;
-                this.isHost = true;
-                this.showGameLobby();
-            })
-            .catch(error => {
-                console.error("Error creating game:", error);
-                this.showToast("Error creating game. Please try again.", "error");
-            });
+        try {
+            if (!this.userId) {
+                this.showToast("Authentication error. Please try again.", "error");
+                return;
+            }
             
-        // Set up presence monitoring for the host
-        this.setupPresence();
+            // Get form values
+            const hostName = document.getElementById("host-name").value;
+            const questionSet = document.getElementById("mp-question-set").value;
+            const difficulty = document.getElementById("mp-difficulty").value;
+            
+            // Generate a random 6-letter game code
+            const gameCode = this.generateGameCode();
+            
+            // Set up game data
+            const gameData = {
+                host: this.userId,
+                hostName: hostName,
+                status: "waiting",
+                settings: {
+                    questionSet: questionSet,
+                    difficulty: difficulty
+                },
+                createdAt: firebase.database.ServerValue.TIMESTAMP,
+                players: {}
+            };
+            
+            // Add the host as a player
+            gameData.players[this.userId] = {
+                name: hostName,
+                character: "",  // Will be set later in character selection
+                score: 0,
+                correctAnswers: 0,
+                isHost: true,
+                joinedAt: firebase.database.ServerValue.TIMESTAMP,
+                connected: true
+            };
+            
+            // Create the game in Firebase
+            this.gameRef = firebase.database().ref(`quizquest/games/${gameCode}`);
+            
+            this.gameRef.set(gameData)
+                .then(() => {
+                    console.log("Game created successfully with code:", gameCode);
+                    this.gameId = gameCode;
+                    this.isHost = true;
+                    this.showGameLobby();
+                })
+                .catch(error => {
+                    console.error("Error creating game:", error);
+                    this.showToast("Error creating game. Please try again.", "error");
+                });
+                
+            // Set up presence monitoring for the host
+            this.setupPresence();
+        } catch (error) {
+            console.error("Error creating game:", error);
+            this.showToast("An error occurred. Please try again.", "error");
+        }
     },
     
     // Join an existing multiplayer game
     joinGame: function() {
-        if (!this.userId) {
-            this.showToast("Authentication error. Please try again.", "error");
-            return;
-        }
-        
-        // Get form values
-        const playerName = document.getElementById("join-name").value;
-        const gameCode = document.getElementById("game-code").value.trim().toUpperCase();
-        
-        if (gameCode.length !== 6) {
-            this.showToast("Invalid game code. Please enter a 6-character code.", "error");
-            return;
-        }
-        
-        // Check if the game exists
-        this.gameRef = database.ref(`quizquest/games/${gameCode}`);
-        
-        this.gameRef.once("value")
-            .then(snapshot => {
-                const gameData = snapshot.val();
-                
-                if (!gameData) {
-                    this.showToast("Game not found. Please check the code and try again.", "error");
-                    return;
-                }
-                
-                if (gameData.status !== "waiting") {
-                    this.showToast("This game has already started or ended.", "error");
-                    return;
-                }
-                
-                // Add the player to the game
-                const playerData = {
-                    name: playerName,
-                    character: "",  // Will be set later in character selection
-                    score: 0,
-                    correctAnswers: 0,
-                    isHost: false,
-                    joinedAt: firebase.database.ServerValue.TIMESTAMP,
-                    connected: true
-                };
-                
-                this.gameId = gameCode;
-                this.isHost = false;
-                
-                // Add player to the game
-                const playerRef = database.ref(`quizquest/games/${gameCode}/players/${this.userId}`);
-                playerRef.set(playerData)
-                    .then(() => {
-                        console.log("Successfully joined game:", gameCode);
-                        this.showGameLobby();
-                    })
-                    .catch(error => {
-                        console.error("Error joining game:", error);
-                        this.showToast("Error joining game. Please try again.", "error");
-                    });
+        try {
+            if (!this.userId) {
+                this.showToast("Authentication error. Please try again.", "error");
+                return;
+            }
+            
+            // Get form values
+            const playerName = document.getElementById("join-name").value;
+            const gameCode = document.getElementById("game-code").value.trim().toUpperCase();
+            
+            if (gameCode.length !== 6) {
+                this.showToast("Invalid game code. Please enter a 6-character code.", "error");
+                return;
+            }
+            
+            // Check if the game exists
+            this.gameRef = firebase.database().ref(`quizquest/games/${gameCode}`);
+            
+            this.gameRef.once("value")
+                .then(snapshot => {
+                    const gameData = snapshot.val();
                     
-                // Set up presence monitoring for the player
-                this.setupPresence();
-            })
-            .catch(error => {
-                console.error("Error checking game:", error);
-                this.showToast("Error connecting to game. Please try again.", "error");
-            });
+                    if (!gameData) {
+                        this.showToast("Game not found. Please check the code and try again.", "error");
+                        return;
+                    }
+                    
+                    if (gameData.status !== "waiting") {
+                        this.showToast("This game has already started or ended.", "error");
+                        return;
+                    }
+                    
+                    // Add the player to the game
+                    const playerData = {
+                        name: playerName,
+                        character: "",  // Will be set later in character selection
+                        score: 0,
+                        correctAnswers: 0,
+                        isHost: false,
+                        joinedAt: firebase.database.ServerValue.TIMESTAMP,
+                        connected: true
+                    };
+                    
+                    this.gameId = gameCode;
+                    this.isHost = false;
+                    
+                    // Add player to the game
+                    const playerRef = firebase.database().ref(`quizquest/games/${gameCode}/players/${this.userId}`);
+                    playerRef.set(playerData)
+                        .then(() => {
+                            console.log("Successfully joined game:", gameCode);
+                            this.showGameLobby();
+                        })
+                        .catch(error => {
+                            console.error("Error joining game:", error);
+                            this.showToast("Error joining game. Please try again.", "error");
+                        });
+                        
+                    // Set up presence monitoring for the player
+                    this.setupPresence();
+                })
+                .catch(error => {
+                    console.error("Error checking game:", error);
+                    this.showToast("Error connecting to game. Please try again.", "error");
+                });
+        } catch (error) {
+            console.error("Error joining game:", error);
+            this.showToast("An error occurred. Please try again.", "error");
+        }
     },
     
     // Show the game lobby screen
@@ -785,17 +793,22 @@ const multiplayer = {
     
     // Set up presence management for disconnections
     setupPresence: function() {
-        if (!this.gameId || !this.userId) return;
-        
-        // Set up onDisconnect to mark player as disconnected
-        this.currentPlayerRef = database.ref(`quizquest/games/${this.gameId}/players/${this.userId}`);
-        this.currentPlayerRef.onDisconnect().update({
-            connected: false
-        });
-        
-        // If host disconnects, mark game as ended
-        if (this.isHost) {
-            this.gameRef.child("status").onDisconnect().set("ended");
+        try {
+            if (!this.gameId || !this.userId) return;
+            
+            // Set up onDisconnect to mark player as disconnected
+            this.currentPlayerRef = firebase.database().ref(`quizquest/games/${this.gameId}/players/${this.userId}`);
+            this.currentPlayerRef.onDisconnect().update({
+                connected: false
+            });
+            
+            // If host disconnects, mark game as ended
+            if (this.isHost) {
+                const statusRef = firebase.database().ref(`quizquest/games/${this.gameId}/status`);
+                statusRef.onDisconnect().set("ended");
+            }
+        } catch (error) {
+            console.error("Error setting up presence:", error);
         }
     },
     
