@@ -1,0 +1,237 @@
+:root {
+    --primary: #4a3aff;
+    --secondary: #ff6b6b;
+    --tertiary: #38b2ac;
+    --bg-color: #f5f7fa;
+    --text-color: #2d3748;
+    --card-bg: #ffffff;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    background-color: var(--primary);
+    color: white;
+    padding: 1rem;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.screen {
+    width: 100%;
+    max-width: 800px;
+    display: none;
+    animation: fadeIn 0.5s ease;
+}
+
+.screen.active {
+    display: block;
+}
+
+.card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1.5rem;
+    width: 100%;
+}
+
+h1, h2, h3 {
+    margin-bottom: 1rem;
+}
+
+button {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 0.5rem;
+    position: relative;
+    z-index: 10;
+    pointer-events: auto !important;
+}
+
+button:hover {
+    background-color: #3929ff;
+    transform: translateY(-2px);
+}
+
+button.secondary {
+    background-color: var(--secondary);
+}
+
+button.secondary:hover {
+    background-color: #ff5252;
+}
+
+button.tertiary {
+    background-color: var(--tertiary);
+}
+
+button.tertiary:hover {
+    background-color: #319795;
+}
+
+input, select {
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #cbd5e0;
+    font-size: 1rem;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.option {
+    background-color: var(--card-bg);
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    z-index: 5;
+}
+
+.option:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.option.correct {
+    border-color: #48bb78;
+    background-color: #f0fff4;
+}
+
+.option.incorrect {
+    border-color: #f56565;
+    background-color: #fff5f5;
+}
+
+.center {
+    text-align: center;
+}
+
+.flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.stats {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.character {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background-color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 3rem;
+    cursor: pointer;
+    margin: 0.5rem;
+    transition: transform 0.3s ease;
+    position: relative;
+    z-index: 5;
+}
+
+.character:hover {
+    transform: scale(1.1);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 12px;
+    background-color: #e2e8f0;
+    border-radius: 6px;
+    margin: 1rem 0;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background-color: var(--tertiary);
+    width: 0%;
+    transition: width 0.5s ease;
+}
+
+.feedback {
+    font-weight: bold;
+    margin: 1rem 0;
+    height: 24px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+footer {
+    background-color: #e2e8f0;
+    padding: 1rem;
+    text-align: center;
+}
+
+.leaderboard-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.leaderboard-item:nth-child(odd) {
+    background-color: #f8fafc;
+}
+
+.timer {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    main {
+        padding: 1rem;
+    }
+    
+    .card {
+        padding: 1.5rem;
+    }
+}
