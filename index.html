@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuizQuest - Educational Game</title>
+    <style>
+        :root {
+            --primary: #4a3aff;
+            --secondary: #ff6b6b;
+            --tertiary: #38b2ac;
+            --bg-color: #f5f7fa;
+            --text-color: #2d3748;
+            --card-bg: #ffffff;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .screen {
+            width: 100%;
+            max-width: 800px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 1.5rem;
+            width: 100%;
+        }
+        
+        h1, h2, h3 {
+            margin-bottom: 1rem;
+        }
+        
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin: 0.5rem;
+        }
+        
+        button:hover {
+            background-color: #3929ff;
+            transform: translateY(-2px);
+        }
+        
+        button.secondary {
+            background-color: var(--secondary);
+        }
+        
+        button.secondary:hover {
+            background-color: #ff5252;
+        }
+        
+        button.tertiary {
+            background-color: var(--tertiary);
+        }
+        
+        button.tertiary:hover {
+            background-color: #319795;
+        }
+        
+        input, select {
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid #cbd5e0;
+            font-size: 1rem;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        
+        .option {
+            background-color: var(--card-bg);
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .option:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .option.correct {
+            border-color: #48bb78;
+            background-color: #f0fff4;
+        }
+        
+        .option.incorrect {
+            border-color: #f56565;
+            background-color: #fff5f5;
+        }
+        
+        .center {
+            text-align: center;
+        }
+        
+        .flex {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        
+        .character {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+            cursor: pointer;
+            margin: 0.5rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .character:hover {
+            transform: scale(1.1);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background-color: #e2e8f0;
+            border-radius: 6px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            background-color: var(--tertiary);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .feedback {
+            font-weight: bold;
+            margin: 1rem 0;
+            height: 24px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        footer {
+            background-color: #e2e8f0;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .leaderboard-item:nth-child(odd) {
+            background-color: #f8fafc;
+        }
+        
+        .timer {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            main {
+                padding: 1rem;
+            }
+            
+            .card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>QuizQuest</h1>
+    </header>
+    
+    <main>
+        <!-- Welcome Screen -->
+        <div class="screen active" id="welcome-screen">
+            <div class="card center">
+                <h2>Welcome to QuizQuest!</h2>
+                <p>Test your knowledge and compete with friends in this educational game.</p>
+                <div class="flex">
+                    <button id="start-btn">Start Game</button>
+                    <button class="secondary" id="how-to-play-btn">How to Play</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- How to Play Screen -->
+        <div class="screen" id="how-to-play-screen">
+            <div class="card">
+                <h2 class="center">How to Play</h2>
+                <ol>
+                    <li>Choose your character</li>
+                    <li>Select a question set</li>
+                    <li>Answer questions correctly to earn points</li>
+                    <li>The faster you answer, the more points you get</li>
+                    <li>Try to climb the leaderboard!</li>
+                </ol>
+                <div class="center">
+                    <button id="how-to-play-back-btn">Back</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Character Selection Screen -->
+        <div class="screen" id="character-select-screen">
+            <div class="card">
+                <h2 class="center">Choose Your Character</h2>
+                <div class="flex">
+                    <div class="character" style="background-color: #4a3aff;" data-character="wizard">🧙</div>
+                    <div class="character" style="background-color: #ff6b6b;" data-character="astronaut">👨‍🚀</div>
+                    <div class="character" style="background-color: #38b2ac;" data-character="scientist">👩‍🔬</div>
+                    <div class="character" style="background-color: #f6ad55;" data-character="athlete">🏃</div>
+                </div>
+                <div class="center">
+                    <button id="character-back-btn">Back</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Game Setup Screen -->
+        <div class="screen" id="game-setup-screen">
+            <div class="card">
+                <h2 class="center">Game Setup</h2>
+                <form id="game-setup-form">
+                    <label for="player-name">Your Name:</label>
+                    <input type="text" id="player-name" required>
+                    
+                    <label for="question-set">Question Set:</label>
+                    <select id="question-set" required>
+                        <option value="general">General Knowledge</option>
+                        <option value="science">Science</option>
+                        <option value="history">History</option>
+                        <option value="math">Mathematics</option>
+                    </select>
+                    
+                    <label for="difficulty">Difficulty:</label>
+                    <select id="difficulty" required>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                    
+                    <div class="center">
+                        <button type="submit">Start Quiz</button>
+                        <button type="button" class="secondary" id="setup-back-btn">Back</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Quiz Screen -->
+        <div class="screen" id="quiz-screen">
+            <div class="stats">
+                <div>Question: <span id="question-number">1</span>/<span id="total-questions">10</span></div>
+                <div>Score: <span id="score">0</span></div>
+            </div>
+            
+            <div class="timer" id="timer">10</div>
+            
+            <div class="progress-bar">
+                <div class="progress-bar-fill" id="progress-bar-fill"></div>
+            </div>
+            
+            <div class="card">
+                <h3 id="question-text">Question text goes here?</h3>
+                
+                <div id="options-container">
+                    <!-- Options will be generated here -->
+                </div>
+                
+                <div class="feedback" id="feedback"></div>
+            </div>
+        </div>
+        
+        <!-- Results Screen -->
+        <div class="screen" id="results-screen">
+            <div class="card">
+                <h2 class="center">Quiz Complete!</h2>
+                <div class="stats">
+                    <div>Final Score: <span id="final-score">0</span></div>
+                    <div>Correct Answers: <span id="correct-answers">0</span>/<span id="results-total-questions">10</span></div>
+                </div>
+                
+                <h3>Leaderboard</h3>
+                <div id="leaderboard">
+                    <!-- Leaderboard will be populated here -->
+                </div>
+                
+                <div class="center">
+                    <button id="play-again-btn">Play Again</button>
+                    <button class="secondary" id="home-btn">Home</button>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <p>QuizQuest - Educational Game &copy; 2025</p>
+    </footer>
+    
+    <script>
+        // Game state
+        const state = {
+            player: {
+                name: "",
+                character: "",
+                score: 0,
+                correctAnswers: 0
+            },
+            game: {
+                questionSet: "",
+                difficulty: "",
+                currentQuestion: 0,
+                questions: [],
+                timer: null,
+                timeLeft: 10,
+                maxTime: 10
+            }
+        };
+        
+        // Question data sets
+        const questionSets = {
+            general: {
+                easy: [
+                    {
+                        question: "What is the capital of France?",
+                        options: ["London", "Paris", "Berlin", "Madrid"],
+                        answer: "Paris"
+                    },
+                    {
+                        question: "Which planet is known as the Red Planet?",
+                        options: ["Venus", "Mars", "Jupiter", "Saturn"],
+                        answer: "Mars"
+                    },
+                    {
+                        question: "Who painted the Mona Lisa?",
+                        options: ["Vincent van Gogh", "Pablo Picasso", "Leonardo da Vinci", "Michelangelo"],
+                        answer: "Leonardo da Vinci"
+                    },
+                    {
+                        question: "What is the largest ocean on Earth?",
+                        options: ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"],
+                        answer: "Pacific Ocean"
+                    },
+                    {
+                        question: "Which element has the chemical symbol 'O'?",
+                        options: ["Gold", "Oxygen", "Osmium", "Oganesson"],
+                        answer: "Oxygen"
+                    }
+                ],
+                medium: [
+                    {
+                        question: "In which year did World War II end?",
+                        options: ["1943", "1945", "1947", "1950"],
+                        answer: "1945"
+                    },
+                    {
+                        question: "What is the largest mammal on Earth?",
+                        options: ["African Elephant", "Blue Whale", "Giraffe", "Polar Bear"],
+                        answer: "Blue Whale"
+                    },
+                    {
+                        question: "What is the currency of Japan?",
+                        options: ["Yuan", "Yen", "Won", "Ringgit"],
+                        answer: "Yen"
+                    },
+                    {
+                        question: "Which instrument has 88 keys?",
+                        options: ["Guitar", "Piano", "Violin", "Trumpet"],
+                        answer: "Piano"
+                    },
+                    {
+                        question: "Who wrote 'Romeo and Juliet'?",
+                        options: ["Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"],
+                        answer: "William Shakespeare"
+                    }
+                ],
+                hard: [
+                    {
+                        question: "What is the smallest prime number?",
+                        options: ["0", "1", "2", "3"],
+                        answer: "2"
+                    },
+                    {
+                        question: "Which gas makes up the majority of Earth's atmosphere?",
+                        options: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Hydrogen"],
+                        answer: "Nitrogen"
+                    },
+                    {
+                        question: "In which country was the game of chess invented?",
+                        options: ["China", "India", "Russia", "Persia"],
+                        answer: "India"
+                    },
+                    {
+                        question: "What is the rarest blood type?",
+                        options: ["AB negative", "O negative", "B negative", "A negative"],
+                        answer: "AB negative"
+                    },
+                    {
+                        question: "Who discovered penicillin?",
+                        options: ["Alexander Fleming", "Marie Curie", "Louis Pasteur", "Joseph Lister"],
+                        answer: "Alexander Fleming"
+                    }
+                ]
+            },
+            science: {
+                easy: [
+                    {
+                        question: "What is the chemical symbol for water?",
+                        options: ["WA", "H2O", "W", "AQ"],
+                        answer: "H2O"
+                    },
+                    {
+                        question: "Which gas do plants absorb from the atmosphere?",
+                        options: ["Oxygen", "Nitrogen", "Carbon Dioxide", "Hydrogen"],
+                        answer: "Carbon Dioxide"
+                    },
+                    {
+                        question: "What is the closest planet to the Sun?",
+                        options: ["Venus", "Earth", "Mars", "Mercury"],
+                        answer: "Mercury"
+                    },
+                    {
+                        question: "What is the process called when plants make their own food using sunlight?",
+                        options: ["Respiration", "Photosynthesis", "Digestion", "Fermentation"],
+                        answer: "Photosynthesis"
+                    },
+                    {
+                        question: "Which of these is NOT a state of matter?",
+                        options: ["Solid", "Liquid", "Energy", "Gas"],
+                        answer: "Energy"
+                    }
+                ],
+                medium: [
+                    {
+                        question: "What type of energy does a battery store?",
+                        options: ["Kinetic Energy", "Thermal Energy", "Chemical Energy", "Nuclear Energy"],
+                        answer: "Chemical Energy"
+                    },
+                    {
+                        question: "What is the smallest unit of matter?",
+                        options: ["Cell", "Molecule", "Atom", "Electron"],
+                        answer: "Atom"
+                    },
+                    {
+                        question: "Which planet has the most moons?",
+                        options: ["Jupiter", "Saturn", "Uranus", "Neptune"],
+                        answer: "Saturn"
+                    },
+                    {
+                        question: "What is the powerhouse of the cell?",
+                        options: ["Nucleus", "Mitochondria", "Ribosome", "Endoplasmic Reticulum"],
+                        answer: "Mitochondria"
+                    },
+                    {
+                        question: "Which of these elements is a noble gas?",
+                        options: ["Chlorine", "Sodium", "Helium", "Phosphorus"],
+                        answer: "Helium"
+                    }
+                ],
+                hard: [
+                    {
+                        question: "What is the speed of light in a vacuum?",
+                        options: ["300,000 km/s", "150,000 km/s", "200,000 km/s", "250,000 km/s"],
+                        answer: "300,000 km/s"
+                    },
+                    {
+                        question: "What is the pH of a neutral solution?",
+                        options: ["0", "7", "14", "10"],
+                        answer: "7"
+                    },
+                    {
+                        question: "What is the formula for calculating work done?",
+                        options: ["Work = Mass × Acceleration", "Work = Force × Distance", "Work = Power × Time", "Work = Energy / Time"],
+                        answer: "Work = Force × Distance"
+                    },
+                    {
+                        question: "Which of these is NOT one of Newton's laws of motion?",
+                        options: ["An object in motion stays in motion", "Force equals mass times acceleration", "Every action has an equal and opposite reaction", "Energy can neither be created nor destroyed"],
+                        answer: "Energy can neither be created nor destroyed"
+                    },
+                    {
+                        question: "What is the atomic number of carbon?",
+                        options: ["6", "12", "14", "8"],
+                        answer: "6"
+                    }
+                ]
+            },
+            history: {
+                easy: [
+                    {
+                        question: "Who was the first President of the United States?",
+                        options: ["Thomas Jefferson", "Abraham Lincoln", "George Washington", "John Adams"],
+                        answer: "George Washington"
+                    },
+                    {
+                        question: "In which year did Christopher Columbus first reach the Americas?",
+                        options: ["1492", "1500", "1400", "1592"],
+                        answer: "1492"
+                    },
+                    {
+                        question: "Which ancient civilization built the pyramids of Giza?",
+                        options: ["Roman", "Greek", "Egyptian", "Mesopotamian"],
+                        answer: "Egyptian"
+                    },
+                    {
+                        question: "Who was the Queen of England for over 63 years during the 19th-20th centuries?",
+                        options: ["Queen Elizabeth I", "Queen Victoria", "Queen Mary", "Queen Anne"],
+                        answer: "Queen Victoria"
+                    },
+                    {
+                        question: "In which year did World War I begin?",
+                        options: ["1914", "1918", "1939", "1945"],
+                        answer: "1914"
+                    }
+                ],
+                medium: [
+                    {
+                        question: "Which empire was ruled by Genghis Khan?",
+                        options: ["Roman Empire", "Ottoman Empire", "Mongol Empire", "Byzantine Empire"],
+                        answer: "Mongol Empire"
+                    },
+                    {
+                        question: "In which century did the Renaissance begin?",
+                        options: ["13th century", "14th century", "15th century", "16th century"],
+                        answer: "14th century"
+                    },
+                    {
+                        question: "Who was the leader of the Soviet Union during most of World War II?",
+                        options: ["Vladimir Lenin", "Joseph Stalin", "Nikita Khrushchev", "Leon Trotsky"],
+                        answer: "Joseph Stalin"
+                    },
+                    {
+                        question: "Which event marked the beginning of the Great Depression?",
+                        options: ["World War I", "Stock Market Crash of 1929", "The Dust Bowl", "Pearl Harbor Attack"],
+                        answer: "Stock Market Crash of 1929"
+                    },
+                    {
+                        question: "Which country was the first to send a human to space?",
+                        options: ["United States", "Soviet Union", "China", "United Kingdom"],
+                        answer: "Soviet Union"
+                    }
+                ],
+                hard: [
+                    {
+                        question: "In which year was the Treaty of Versailles signed?",
+                        options: ["1917", "1918", "1919", "1920"],
+                        answer: "1919"
+                    },
+                    {
+                        question: "Who was the first Emperor of China?",
+                        options: ["Kublai Khan", "Sun Yat-sen", "Qin Shi Huang", "Emperor Wu of Han"],
+                        answer: "Qin Shi Huang"
+                    },
+                    {
+                        question: "During which period did the Industrial Revolution begin?",
+                        options: ["Late 18th century", "Mid-17th century", "Early 19th century", "Late 16th century"],
+                        answer: "Late 18th century"
+                    },
+                    {
+                        question: "Which battle marked the end of Napoleon's rule as Emperor?",
+                        options: ["Battle of Austerlitz", "Battle of Waterloo", "Battle of Trafalgar", "Battle of Borodino"],
+                        answer: "Battle of Waterloo"
+                    },
+                    {
+                        question: "Who was the first female Prime Minister of India?",
+                        options: ["Sirimavo Bandaranaike", "Indira Gandhi", "Benazir Bhutto", "Golda Meir"],
+                        answer: "Indira Gandhi"
+                    }
+                ]
+            },
+            math: {
+                easy: [
+                    {
+                        question: "What is 7 × 8?",
+                        options: ["54", "56", "64", "58"],
+                        answer: "56"
+                    },
+                    {
+                        question: "What is 15 + 27?",
+                        options: ["42", "43", "41", "40"],
+                        answer: "42"
+                    },
+                    {
+                        question: "What is half of 86?",
+                        options: ["43", "44", "42", "41"],
+                        answer: "43"
+                    },
+                    {
+                        question: "What is 9 squared?",
+                        options: ["81", "72", "90", "18"],
+                        answer: "81"
+                    },
+                    {
+                        question: "If x + 5 = 12, what is x?",
+                        options: ["5", "7", "8", "17"],
+                        answer: "7"
+                    }
+                ],
+                medium: [
+                    {
+                        question: "What is the square root of 144?",
+                        options: ["12", "14", "10", "16"],
+                        answer: "12"
+                    },
+                    {
+                        question: "What is the value of π (pi) to 2 decimal places?",
+                        options: ["3.41", "3.14", "3.12", "3.16"],
+                        answer: "3.14"
+                    },
+                    {
+                        question: "What is 15% of 80?",
+                        options: ["12", "8", "16", "10"],
+                        answer: "12"
+                    },
+                    {
+                        question: "If 2x - 3 = 9, what is x?",
+                        options: ["6", "5", "7", "4"],
+                        answer: "6"
+                    },
+                    {
+                        question: "What is the area of a circle with radius 5 units? (Use π = 3.14)",
+                        options: ["78.5 square units", "31.4 square units", "15.7 square units", "25 square units"],
+                        answer: "78.5 square units"
+                    }
+                ],
+                hard: [
+                    {
+                        question: "Solve for x: 2x² + 5x - 3 = 0",
+                        options: ["x = -3 or x = 0.5", "x = 3 or x = -0.5", "x = -3 or x = -0.5", "x = 3 or x = 0.5"],
+                        answer: "x = -3 or x = 0.5"
+                    },
+                    {
+                        question: "What is the derivative of f(x) = 3x² + 2x - 5?",
+                        options: ["f'(x) = 6x + 2", "f'(x) = 3x + 2", "f'(x) = 6x - 2", "f'(x) = 6x² + 2"],
+                        answer: "f'(x) = 6x + 2"
+                    },
+                    {
+                        question: "If log₁₀(100) = 2, what is log₁₀(1000)?",
+                        options: ["1", "2", "3", "4"],
+                        answer: "3"
+                    },
+                    {
+                        question: "A car travels at 60 mph for 2 hours and then at 40 mph for 3 hours. What is the average speed for the entire journey?",
+                        options: ["48 mph", "50 mph", "52 mph", "45 mph"],
+                        answer: "48 mph"
+                    },
+                    {
+                        question: "What is the sum of the first 15 terms of the arithmetic sequence: 3, 7, 11, 15,...?",
+                        options: ["450", "435", "420", "465"],
+                        answer: "435"
+                    }
+                ]
+            }
+        };
+        
+        // Leaderboard data (would typically come from a database)
+        let leaderboard = [
+            { name: "Alex", character: "wizard", score: 950 },
+            { name: "Sam", character: "scientist", score: 820 },
+            { name: "Jordan", character: "astronaut", score: 780 }
+        ];
+        
+        // Element references
+        const screens = {
+            welcome: document.getElementById("welcome-screen"),
+            howToPlay: document.getElementById("how-to-play-screen"),
+            characterSelect: document.getElementById("character-select-screen"),
+            gameSetup: document.getElementById("game-setup-screen"),
+            quiz: document.getElementById("quiz-screen"),
+            results: document.getElementById("results-screen")
+        };
+        
+        // Navigation functions
+        function showScreen(screenId) {
+            Object.values(screens).forEach(screen => {
+                screen.classList.remove("active");
+            });
+            
+            screens[screenId].classList.add("active");
+        }
+        
+        // Event listeners
+        document.getElementById("start-btn").addEventListener("click", () => {
+            showScreen("characterSelect");
+        });
+        
+        document.getElementById("how-to-play-btn").addEventListener("click", () => {
+            showScreen("howToPlay");
+        });
+        
+        document.getElementById("how-to-play-back-btn").addEventListener("click", () => {
+            showScreen("welcome");
+        });
+        
+        document.getElementById("character-back-btn").addEventListener("click", () => {
+            showScreen("welcome");
+        });
+        
+        document.getElementById("setup-back-btn").addEventListener("click", () => {
+            showScreen("characterSelect");
+        });
+        
+        document.getElementById("play-again-btn").addEventListener("click", () => {
+            resetGame();
+            showScreen("gameSetup");
+        });
+        
+        document.getElementById("home-btn").addEventListener("click", () => {
+            resetGame();
+            showScreen("welcome");
+        });
+        
+        // Character selection
+        const characters = document.querySelectorAll(".character");
+        characters.forEach(char => {
+            char.addEventListener("click", () => {
+                state.player.character = char.dataset.character;
+                showScreen("gameSetup");
+            });
+        });
+        
+        // Game setup form submission
+        document.getElementById("game-setup-form").addEventListener("submit", (e) => {
+            e.preventDefault();
+            
+            state.player.name = document.getElementById("player-name").value;
+            state.game.questionSet = document.getElementById("question-set").value;
+            state.game.difficulty = document.getElementById("difficulty").value;
+            
+            loadQuestions();
+            startQuiz();
+        });
+        
+        // Load questions based on selected category and difficulty
+        function loadQuestions() {
+            state.game.questions = questionSets[state.game.questionSet][state.game.difficulty].sort(() => Math.random() - 0.5);
+            document.getElementById("total-questions").textContent = state.game.questions.length;
+            document.getElementById("results-total-questions").textContent = state.game.questions.length;
+        }
+        
+        // Start the quiz
+        function startQuiz() {
+            state.game.currentQuestion = 0;
+            state.player.score = 0;
+            state.player.correctAnswers = 0;
+            
+            showCurrentQuestion();
+            showScreen("quiz");
+        }
+        
+        // Display current question
+        function showCurrentQuestion() {
+            const questionData = state.game.questions[state.game.currentQuestion];
+            
+            document.getElementById("question-number").textContent = state.game.currentQuestion + 1;
+            document.getElementById("score").textContent = state.player.score;
+            document.getElementById("question-text").textContent = questionData.question;
+            
+            const optionsContainer = document.getElementById("options-container");
+            optionsContainer.innerHTML = "";
+            
+            // Reset feedback and progress bar
+            document.getElementById("feedback").textContent = "";
+            document.getElementById("progress-bar-fill").style.width = "0%";
+            
+            // Shuffle options
+            const shuffledOptions = [...questionData.options].sort(() => Math.random() - 0.5);
+            
+            // Create option elements
+            shuffledOptions.forEach(option => {
+                const optionElement = document.createElement("div");
+                optionElement.className = "option";
+                optionElement.textContent = option;
+                optionElement.addEventListener("click", () => selectAnswer(option));
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            // Start timer
+            startTimer();
+        }
+        
+        // Timer functionality
+        function startTimer() {
+            state.game.timeLeft = state.game.maxTime;
+            document.getElementById("timer").textContent = state.game.timeLeft;
+            
+            // Clear any existing timer
+            if (state.game.timer) {
+                clearInterval(state.game.timer);
+            }
+            
+            // Update progress bar
+            const progressBarFill = document.getElementById("progress-bar-fill");
+            progressBarFill.style.width = "100%";
+            
+            // Set new timer
+            state.game.timer = setInterval(() => {
+                state.game.timeLeft--;
+                document.getElementById("timer").textContent = state.game.timeLeft;
+                
+                // Update progress bar
+                const percentage = (state.game.timeLeft / state.game.maxTime) * 100;
+                progressBarFill.style.width = `${percentage}%`;
+                
+                if (state.game.timeLeft <= 0) {
+                    clearInterval(state.game.timer);
+                    handleTimeout();
+                }
+            }, 1000);
+        }
+        
+        // Handle when time runs out
+        function handleTimeout() {
+            const options = document.querySelectorAll(".option");
+            options.forEach(option => {
+                if (option.textContent === state.game.questions[state.game.currentQuestion].answer) {
+                    option.classList.add("correct");
+                }
+                option.style.pointerEvents = "none";
+            });
+            
+            document.getElementById("feedback").textContent = "Time's up!";
+            document.getElementById("feedback").style.color = "#f56565";
+            
+            setTimeout(nextQuestion, 2000);
+        }
+        
+        // Handle answer selection
+        function selectAnswer(selected) {
+            clearInterval(state.game.timer);
+            
+            const currentQuestion = state.game.questions[state.game.currentQuestion];
+            const isCorrect = selected === currentQuestion.answer;
+            
+            // Calculate score based on time left
+            const timeBonus = state.game.timeLeft * 10;
+            
+            // Update options display
+            const options = document.querySelectorAll(".option");
+            options.forEach(option => {
+                if (option.textContent === selected) {
+                    option.classList.add(isCorrect ? "correct" : "incorrect");
+                } else if (option.textContent === currentQuestion.answer) {
+                    option.classList.add("correct");
+                }
+                option.style.pointerEvents = "none";
+            });
+            
+            // Update player stats
+            if (isCorrect) {
+                const pointsEarned = 100 + timeBonus;
+                state.player.score += pointsEarned;
+                state.player.correctAnswers++;
+                
+                document.getElementById("score").textContent = state.player.score;
+                document.getElementById("feedback").textContent = `Correct! +${pointsEarned} points`;
+                document.getElementById("feedback").style.color = "#48bb78";
+            } else {
+                document.getElementById("feedback").textContent = "Incorrect!";
+                document.getElementById("feedback").style.color = "#f56565";
+            }
+            
+            // Move to next question after delay
+            setTimeout(nextQuestion, 2000);
+        }
+        
+        // Move to next question or end game
+        function nextQuestion() {
+            state.game.currentQuestion++;
+            
+            if (state.game.currentQuestion < state.game.questions.length) {
+                showCurrentQuestion();
+            } else {
+                endGame();
+            }
+        }
+        
+        // End the game and show results
+        function endGame() {
+            // Update final stats
+            document.getElementById("final-score").textContent = state.player.score;
+            document.getElementById("correct-answers").textContent = state.player.correctAnswers;
+            
+            // Add player to leaderboard
+            leaderboard.push({
+                name: state.player.name,
+                character: state.player.character,
+                score: state.player.score
+            });
+            
+            // Sort leaderboard
+            leaderboard.sort((a, b) => b.score - a.score);
+            
+            // Keep only top 10
+            if (leaderboard.length > 10) {
+                leaderboard = leaderboard.slice(0, 10);
+            }
+            
+            // Display leaderboard
+            displayLeaderboard();
+            
+            // Show results screen
+            showScreen("results");
+        }
+        
+        // Display leaderboard
+        function displayLeaderboard() {
+            const leaderboardElement = document.getElementById("leaderboard");
+            leaderboardElement.innerHTML = "";
+            
+            leaderboard.forEach((entry, index) => {
+                const item = document.createElement("div");
+                item.className = "leaderboard-item";
+                
+                let characterEmoji = "👤";
+                switch (entry.character) {
+                    case "wizard": characterEmoji = "🧙"; break;
+                    case "astronaut": characterEmoji = "👨‍🚀"; break;
+                    case "scientist": characterEmoji = "👩‍🔬"; break;
+                    case "athlete": characterEmoji = "🏃"; break;
+                }
+                
+                item.innerHTML = `
+                    <div>${index + 1}. ${characterEmoji} ${entry.name}</div>
+                    <div>${entry.score}</div>
+                `;
+                
+                leaderboardElement.appendChild(item);
+            });
+        }
+        
+        // Reset game state
+        function resetGame() {
+            state.player.score = 0;
+            state.player.correctAnswers = 0;
+            state.game.currentQuestion = 0;
+            state.game.questions = [];
+            
+            if (state.game.timer) {
+                clearInterval(state.game.timer);
+            }
+        }
