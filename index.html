@@ -744,6 +744,7 @@
         
         // Navigation functions
         function showScreen(screenId) {
+            console.log("Showing screen:", screenId);
             Object.values(screens).forEach(screen => {
                 screen.classList.remove("active");
             });
