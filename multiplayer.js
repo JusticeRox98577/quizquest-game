@@ -13,6 +13,24 @@ const multiplayer = {
     init: function() {
         console.log("Initializing multiplayer functionality");
         
+        // Check if Firebase is loaded
+        if (typeof firebase === 'undefined') {
+            console.error("Firebase not loaded. Make sure firebase scripts are included before multiplayer.js");
+            this.showToast("Firebase not loaded. Check console for details.", "error");
+            return;
+        }
+        
+        // Check if auth and database are available
+        if (!firebase.auth || !firebase.database) {
+            console.error("Firebase auth or database not loaded. Make sure all required Firebase modules are included.");
+            this.showToast("Firebase modules missing. Check console for details.", "error");
+            return;
+        }
+        
+        // Get references to Firebase services
+        const auth = firebase.auth();
+        const database = firebase.database();
+        
         // Set up Firebase authentication (anonymous)
         auth.signInAnonymously()
             .then((userCredential) => {
