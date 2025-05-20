@@ -649,85 +649,42 @@ const multiplayer = {
     
     // Prepare for multiplayer quiz
     prepareMultiplayerQuiz: function() {
-        console.log("Preparing for multiplayer quiz");
-        
-        // Ensure we're in multiplayer mode
-        state.game.isMultiplayer = true;
-        
         // Get game settings and questions
-        this.gameRef.once("value")
-            .then(snapshot => {
-                const gameData = snapshot.val();
-                if (!gameData) {
-                    console.error("Game data not found");
-                    return;
-                }
-                
-                console.log("Game data retrieved:", {
-                    status: gameData.status,
-                    currentQuestion: gameData.currentQuestion,
-                    hasQuestions: !!gameData.questions,
-                    questionCount: gameData.questions ? gameData.questions.length : 0
-                });
-                
-                if (!gameData.questions || !gameData.settings) {
-                    console.error("Required game data missing", {
-                        hasQuestions: !!gameData.questions,
-                        hasSettings: !!gameData.settings
-                    });
-                    return;
-                }
-                
-                // Store questions in local state
-                state.game.questions = gameData.questions;
-                state.game.questionSet = gameData.settings.questionSet;
-                state.game.difficulty = gameData.settings.difficulty;
-                
-                console.log("Stored questions in local state:", {
-                    questionCount: state.game.questions.length,
-                    questionSet: state.game.questionSet,
-                    difficulty: state.game.difficulty
-                });
-                
-                // Set up listener for current question changes
-                this.gameRef.child("currentQuestion").on("value", snapshot => {
-                    const questionIndex = snapshot.val();
-                    if (questionIndex === null || questionIndex === undefined) {
-                        console.error("Received null/undefined question index");
-                        return;
-                    }
-                    
-                    console.log("Current question changed to:", questionIndex);
+        Promise.all([
+            this.gameRef.child("settings").once("value"),
+            this.gameRef.child("questions").once("value")
+        ])
+        .then(([settingsSnapshot, questionsSnapshot]) => {
+            const settings = settingsSnapshot.val();
+            const questions = questionsSnapshot.val();
+            
+            // Set up the game state
+            state.game.questionSet = settings.questionSet;
+            state.game.difficulty = settings.difficulty;
+            state.game.questions = questions;
+            state.game.currentQuestion = 0;
+            
+            // Listen for current question changes
+            this.gameRef.child("currentQuestion").on("value", snapshot => {
+                const questionIndex = snapshot.val();
+                if (questionIndex !== null && questionIndex >= 0) {
                     state.game.currentQuestion = questionIndex;
-                    
-                    // Clear any existing timers to prevent issues
-                    if (state.game.timer) {
-                        clearInterval(state.game.timer);
-                        state.game.timer = null;
-                        console.log("Cleared existing timer before showing new question");
-                    }
-                    
-                    // Show the current question
-                    this.showMultiplayerQuestion();
-                });
-                
-                // Show the quiz screen
-                showScreen("quiz-screen");
-                
-                // Show live scoreboard
-                const liveScoreboard = document.getElementById("live-scoreboard");
-                if (liveScoreboard) {
-                    liveScoreboard.style.display = "block";
+                    showMultiplayerQuestion();
                 }
-                
-                // Update live scoreboard
-                this.updateLiveScoreboard();
-                
-                console.log("Multiplayer quiz preparation complete");
-            })
-            .catch(error => {
-                console.error("Error preparing multiplayer quiz:", error);
             });
+            
+            // Show the quiz screen
+            showScreen("quiz-screen");
+            
+            // Show live scoreboard
+            document.getElementById("live-scoreboard").style.display = "block";
+            
+            // Update live scoreboard
+            this.updateLiveScoreboard();
+        })
+        .catch(error => {
+            console.error("Error preparing multiplayer quiz:", error);
+        });
     },
     
     // Show the current question in multiplayer
@@ -907,16 +864,11 @@ const multiplayer = {
     
     // End the multiplayer game (host only)
     endMultiplayerGame: function() {
-        console.log("Host ending multiplayer game");
-        
-        if (!this.isHost) {
-            console.log("Only host can end the game");
-            return;
-        }
+        if (!this.isHost) return;
         
         this.gameRef.child("status").set("ended")
             .then(() => {
-                console.log("Game status updated to 'ended'");
+                console.log("Game ended");
             })
             .catch(error => {
                 console.error("Error ending game:", error);
@@ -925,107 +877,35 @@ const multiplayer = {
     
     // Handle game end
     handleGameEnd: function() {
-        console.log("Handling game end");
-        
-        // Clear any existing timers
-        if (state.game.timer) {
-            clearInterval(state.game.timer);
-            state.game.timer = null;
-            console.log("Cleared timer at game end");
-        }
-        
-        // Remove question change listener
-        if (this.gameRef) {
-            this.gameRef.child("currentQuestion").off("value");
-            console.log("Removed currentQuestion listener");
-        }
-        
         // Get final player stats
         this.playersRef.once("value")
             .then(snapshot => {
                 const players = snapshot.val();
-                if (!players) {
-                    console.error("No players found when ending game");
-                    return;
-                }
-                
-                console.log("Final player stats:", players);
                 
                 // Update final stats for current player
                 const currentPlayer = players[this.userId];
-                if (!currentPlayer) {
-                    console.error("Current player not found in results");
-                    return;
-                }
-                
-                const finalScoreElement = document.getElementById("final-score");
-                const correctAnswersElement = document.getElementById("correct-answers");
-                const resultsTotalQuestionsElement = document.getElementById("results-total-questions");
-                const returnToLobbyBtn = document.getElementById("return-to-lobby-btn");
-                
-                if (finalScoreElement) {
-                    finalScoreElement.textContent = currentPlayer.score;
-                }
-                
-                if (correctAnswersElement) {
-                    correctAnswersElement.textContent = currentPlayer.correctAnswers;
-                }
-                
-                if (resultsTotalQuestionsElement && state.game.questions) {
-                    resultsTotalQuestionsElement.textContent = state.game.questions.length;
-                }
+                document.getElementById("final-score").textContent = currentPlayer.score;
+                document.getElementById("correct-answers").textContent = currentPlayer.correctAnswers;
+                document.getElementById("results-total-questions").textContent = state.game.questions.length;
                 
                 // Show multiplayer-specific elements
-                if (returnToLobbyBtn) {
-                    returnToLobbyBtn.style.display = "inline-block";
-                }
+                document.getElementById("return-to-lobby-btn").style.display = "inline-block";
                 
                 // Update leaderboard with all players
                 const leaderboardElement = document.getElementById("leaderboard");
-                if (leaderboardElement) {
-                    leaderboardElement.innerHTML = "";
-                    
-                    // Convert players object to array and sort by score
-                    const playersArray = Object.entries(players).map(([id, player]) => ({
-                        id,
-                        ...player
-                    }));
-                    
-                    // Sort by score (highest first)
-                    playersArray.sort((a, b) => b.score - a.score);
-                    
-                    // Create leaderboard items
-                    playersArray.forEach((player, index) => {
-                        const item = document.createElement("div");
-                        item.className = "leaderboard-item";
-                        
-                        let characterEmoji = "👤";
-                        if (player.character) {
-                            switch (player.character) {
-                                case "wizard": characterEmoji = "🧙"; break;
-                                case "astronaut": characterEmoji = "👨‍🚀"; break;
-                                case "scientist": characterEmoji = "👩‍🔬"; break;
-                                case "athlete": characterEmoji = "🏃"; break;
-                            }
-                        }
-                        
-                        item.innerHTML = `
-                            <div>${index + 1}. ${characterEmoji} ${player.name} ${player.isHost ? '(Host)' : ''}</div>
-                            <div>${player.score}</div>
-                        `;
-                        
-                        leaderboardElement.appendChild(item);
-                    });
-                }
+                leaderboardElement.innerHTML = "";
                 
-                // Show results screen
-                showScreen("results-screen");
-                console.log("Game end complete, showing results screen");
-            })
-            .catch(error => {
-                console.error("Error handling game end:", error);
-            });
-    }, => {
+                // Convert players object to array and sort by score
+                const playersArray = Object.entries(players).map(([id, player]) => ({
+                    id,
+                    ...player
+                }));
+                
+                // Sort by score (highest first)
+                playersArray.sort((a, b) => b.score - a.score);
+                
+                // Create leaderboard items
+                playersArray.forEach((player, index) => {
                     const item = document.createElement("div");
                     item.className = "leaderboard-item";
                     
