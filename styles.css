@@ -2,6 +2,479 @@
     --primary: #4a3aff;
     --secondary: #ff6b6b;
     --tertiary: #38b2ac;
+    --neutral: #718096;
+    --bg-color: #f5f7fa;
+    --text-color: #2d3748;
+    --card-bg: #ffffff;
+    --success: #48bb78;
+    --danger: #f56565;
+    --warning: #f6ad55;
+    --info: #4299e1;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    background-color: var(--primary);
+    color: white;
+    padding: 1rem;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.screen {
+    width: 100%;
+    max-width: 800px;
+    display: none;
+    animation: fadeIn 0.5s ease;
+}
+
+.screen.active {
+    display: block;
+}
+
+.card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1.5rem;
+    width: 100%;
+}
+
+h1, h2, h3 {
+    margin-bottom: 1rem;
+}
+
+button {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 0.5rem;
+    position: relative;
+    z-index: 10;
+    pointer-events: auto !important;
+}
+
+button:hover {
+    background-color: #3929ff;
+    transform: translateY(-2px);
+}
+
+button.secondary {
+    background-color: var(--secondary);
+}
+
+button.secondary:hover {
+    background-color: #ff5252;
+}
+
+button.tertiary {
+    background-color: var(--tertiary);
+}
+
+button.tertiary:hover {
+    background-color: #319795;
+}
+
+button.neutral {
+    background-color: var(--neutral);
+}
+
+button.neutral:hover {
+    background-color: #4a5568;
+}
+
+button.small-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+}
+
+button.primary-btn {
+    background-color: var(--primary);
+    font-size: 1.1rem;
+    padding: 0.8rem 2rem;
+}
+
+button.secondary-btn {
+    background-color: var(--neutral);
+    color: white;
+}
+
+input, select {
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #cbd5e0;
+    font-size: 1rem;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.option {
+    background-color: var(--card-bg);
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    z-index: 5;
+}
+
+.option:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.option.correct {
+    border-color: var(--success);
+    background-color: #f0fff4;
+}
+
+.option.incorrect {
+    border-color: var(--danger);
+    background-color: #fff5f5;
+}
+
+.center {
+    text-align: center;
+}
+
+.flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.stats {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.character {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background-color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 3rem;
+    cursor: pointer;
+    margin: 0.5rem;
+    transition: transform 0.3s ease;
+    position: relative;
+    z-index: 5;
+}
+
+.character:hover {
+    transform: scale(1.1);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 12px;
+    background-color: #e2e8f0;
+    border-radius: 6px;
+    margin: 1rem 0;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background-color: var(--tertiary);
+    width: 0%;
+    transition: width 0.5s ease;
+}
+
+.feedback {
+    font-weight: bold;
+    margin: 1rem 0;
+    height: 24px;
+}
+
+.game-code-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+}
+
+.code-box {
+    background-color: #EDF2F7;
+    padding: 0.75rem 1.5rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    letter-spacing: 0.2rem;
+    color: var(--primary);
+    border-radius: 8px;
+    margin: 0 1rem;
+    border: 2px dashed var(--primary);
+}
+
+.player-list-container {
+    margin: 1.5rem 0;
+}
+
+.player-list {
+    background-color: #EDF2F7;
+    border-radius: 8px;
+    padding: 1rem;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.player-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    border-bottom: 1px solid #E2E8F0;
+}
+
+.player-item:last-child {
+    border-bottom: none;
+}
+
+.player-character {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1rem;
+}
+
+.player-name {
+    flex: 1;
+}
+
+.player-host-badge {
+    background-color: var(--primary);
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    margin-left: 0.5rem;
+}
+
+.lobby-info {
+    background-color: #f8fafc;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1.5rem 0;
+}
+
+.host-only {
+    display: none;
+}
+
+.player-only {
+    display: none;
+}
+
+.multiplayer-only {
+    display: none;
+}
+
+.live-score-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem;
+    border-bottom: 1px solid #E2E8F0;
+    align-items: center;
+}
+
+.live-score-item:last-child {
+    border-bottom: none;
+}
+
+.player-info {
+    display: flex;
+    align-items: center;
+}
+
+.score-value {
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.score-change {
+    margin-left: 0.5rem;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    animation: pulse 1s ease-out;
+}
+
+.score-change.positive {
+    background-color: #f0fff4;
+    color: var(--success);
+}
+
+.score-change.negative {
+    background-color: #fff5f5;
+    color: var(--danger);
+}
+
+#live-scoreboard {
+    margin-top: 1rem;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.leaderboard-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.leaderboard-item:nth-child(odd) {
+    background-color: #f8fafc;
+}
+
+.timer {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 0.5rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+footer {
+    background-color: #e2e8f0;
+    padding: 1rem;
+    text-align: center;
+}
+
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.toast {
+    background-color: white;
+    border-left: 4px solid;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    margin-bottom: 10px;
+    padding: 1rem;
+    width: 300px;
+    animation: slideIn 0.3s ease, fadeOut 0.5s ease 3.5s forwards;
+}
+
+.toast.success {
+    border-left-color: var(--success);
+}
+
+.toast.error {
+    border-left-color: var(--danger);
+}
+
+.toast.info {
+    border-left-color: var(--info);
+}
+
+.toast.warning {
+    border-left-color: var(--warning);
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@media (max-width: 768px) {
+    main {
+        padding: 1rem;
+    }
+    
+    .card {
+        padding: 1.5rem;
+    }
+    
+    .toast-container {
+        width: 100%;
+        right: 0;
+    }
+    
+    .toast {
+        width: 94%;
+        margin: 0 3% 10px 3%;
+    }
+}:root {
+    --primary: #4a3aff;
+    --secondary: #ff6b6b;
+    --tertiary: #38b2ac;
     --bg-color: #f5f7fa;
     --text-color: #2d3748;
     --card-bg: #ffffff;

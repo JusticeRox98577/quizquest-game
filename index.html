@@ -18,8 +18,10 @@
                 <h2>Welcome to QuizQuest!</h2>
                 <p>Test your knowledge and compete with friends in this educational game.</p>
                 <div class="flex">
-                    <button id="start-btn">Start Game</button>
-                    <button class="secondary" id="how-to-play-btn">How to Play</button>
+                    <button id="single-player-btn">Single Player</button>
+                    <button id="create-game-btn" class="secondary">Create Game</button>
+                    <button id="join-game-btn" class="tertiary">Join Game</button>
+                    <button id="how-to-play-btn" class="neutral">How to Play</button>
                 </div>
             </div>
         </div>
@@ -34,6 +36,13 @@
                     <li>Answer questions correctly to earn points</li>
                     <li>The faster you answer, the more points you get</li>
                     <li>Try to climb the leaderboard!</li>
+                </ol>
+                <h3>Multiplayer</h3>
+                <ol>
+                    <li>Create a game or join using a game code</li>
+                    <li>Wait for all players to join</li>
+                    <li>The host will start the game when everyone is ready</li>
+                    <li>Answer quickly to get more points than your friends!</li>
                 </ol>
                 <div class="center">
                     <button id="how-to-play-back-btn">Back</button>
@@ -88,6 +97,90 @@
             </div>
         </div>
         
+        <!-- Create Game Screen -->
+        <div class="screen" id="create-game-screen">
+            <div class="card">
+                <h2 class="center">Create Multiplayer Game</h2>
+                <form id="create-game-form">
+                    <label for="host-name">Your Name:</label>
+                    <input type="text" id="host-name" required>
+                    
+                    <label for="mp-question-set">Question Set:</label>
+                    <select id="mp-question-set" required>
+                        <option value="general">General Knowledge</option>
+                        <option value="science">Science</option>
+                        <option value="history">History</option>
+                        <option value="math">Mathematics</option>
+                    </select>
+                    
+                    <label for="mp-difficulty">Difficulty:</label>
+                    <select id="mp-difficulty" required>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                    
+                    <div class="center">
+                        <button type="submit">Create Game</button>
+                        <button type="button" class="secondary" id="create-game-back-btn">Back</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Join Game Screen -->
+        <div class="screen" id="join-game-screen">
+            <div class="card">
+                <h2 class="center">Join Multiplayer Game</h2>
+                <form id="join-game-form">
+                    <label for="join-name">Your Name:</label>
+                    <input type="text" id="join-name" required>
+                    
+                    <label for="game-code">Game Code:</label>
+                    <input type="text" id="game-code" required placeholder="Enter 6-digit code">
+                    
+                    <div class="center">
+                        <button type="submit">Join Game</button>
+                        <button type="button" class="secondary" id="join-game-back-btn">Back</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Game Lobby Screen -->
+        <div class="screen" id="game-lobby-screen">
+            <div class="card">
+                <h2 class="center">Game Lobby</h2>
+                <div class="game-code-display">
+                    <h3>Game Code:</h3>
+                    <div id="lobby-game-code" class="code-box">ABCDEF</div>
+                    <button id="copy-code-btn" class="small-btn">Copy</button>
+                </div>
+                
+                <div class="player-list-container">
+                    <h3>Players:</h3>
+                    <div id="lobby-player-list" class="player-list">
+                        <!-- Player list will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="lobby-info">
+                    <p>Question Set: <span id="lobby-question-set">General Knowledge</span></p>
+                    <p>Difficulty: <span id="lobby-difficulty">Medium</span></p>
+                </div>
+                
+                <div id="host-controls" class="center host-only">
+                    <button id="start-game-btn" class="primary-btn">Start Game</button>
+                    <button id="cancel-game-btn" class="secondary-btn">Cancel Game</button>
+                </div>
+                
+                <div id="player-waiting" class="center player-only">
+                    <p>Waiting for host to start the game...</p>
+                    <button id="leave-game-btn" class="secondary-btn">Leave Game</button>
+                </div>
+            </div>
+        </div>
+        
         <!-- Quiz Screen -->
         <div class="screen" id="quiz-screen">
             <div class="stats">
@@ -110,6 +203,14 @@
                 
                 <div class="feedback" id="feedback"></div>
             </div>
+            
+            <!-- Multiplayer live scoreboard (shown in multiplayer mode) -->
+            <div id="live-scoreboard" class="card">
+                <h3 class="center">Live Scores</h3>
+                <div id="live-player-scores">
+                    <!-- Live scores will be populated here -->
+                </div>
+            </div>
         </div>
         
         <!-- Results Screen -->
@@ -128,6 +229,7 @@
                 
                 <div class="center">
                     <button id="play-again-btn">Play Again</button>
+                    <button id="return-to-lobby-btn" class="multiplayer-only">Return to Lobby</button>
                     <button class="secondary" id="home-btn">Home</button>
                 </div>
             </div>
@@ -138,7 +240,18 @@
         <p>QuizQuest - Educational Game &copy; 2025</p>
     </footer>
     
+    <!-- Firebase SDKs (compat version) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
+    
+    <!-- Your Firebase Config -->
+    <script src="firebase-config.js"></script>
+    
+    <!-- Your Game Scripts -->
     <script src="questions.js"></script>
+    <script src="multiplayer.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
