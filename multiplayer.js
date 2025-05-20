@@ -270,29 +270,47 @@ const multiplayer = {
     
     // Set up Firebase listeners for game state
     setupGameListeners: function() {
+        console.log("Setting up game listeners");
+        
         // Listen for game settings changes
         this.gameRef.child("settings").on("value", snapshot => {
             const settings = snapshot.val();
             if (settings) {
-                document.getElementById("lobby-question-set").textContent = 
-                    this.getQuestionSetName(settings.questionSet);
-                document.getElementById("lobby-difficulty").textContent = 
-                    settings.difficulty.charAt(0).toUpperCase() + settings.difficulty.slice(1);
+                const lobbyQuestionSetElement = document.getElementById("lobby-question-set");
+                const lobbyDifficultyElement = document.getElementById("lobby-difficulty");
+                
+                if (lobbyQuestionSetElement) {
+                    lobbyQuestionSetElement.textContent = 
+                        this.getQuestionSetName(settings.questionSet);
+                }
+                
+                if (lobbyDifficultyElement) {
+                    lobbyDifficultyElement.textContent = 
+                        settings.difficulty.charAt(0).toUpperCase() + settings.difficulty.slice(1);
+                }
             }
         });
         
         // Listen for player list changes
         this.playersRef = this.gameRef.child("players");
         this.playersRef.on("value", snapshot => {
-            this.updatePlayerList(snapshot.val());
+            const players = snapshot.val();
+            if (players) {
+                this.players = players;
+                this.updatePlayerList(players);
+            }
         });
         
         // Listen for game status changes
         this.gameRef.child("status").on("value", snapshot => {
             const status = snapshot.val();
+            console.log("Game status changed to:", status);
+            
             if (status === "playing") {
+                console.log("Game status is 'playing', calling handleGameStart()");
                 this.handleGameStart();
             } else if (status === "ended") {
+                console.log("Game status is 'ended', calling handleGameEnd()");
                 this.handleGameEnd();
             }
         });
@@ -356,66 +374,276 @@ const multiplayer = {
     
     // Start the multiplayer game (host only)
     startGame: function() {
-        if (!this.isHost) return;
-        
-        // Get all players who have selected a character
-        const readyPlayers = Object.values(this.players).filter(p => p.character);
-        
-        if (readyPlayers.length < Object.keys(this.players).length) {
-            this.showToast("Not all players have selected a character.", "warning");
+        if (!this.isHost) {
+            console.log("Only the host can start the game");
             return;
         }
         
-        // Get game settings
-        this.gameRef.child("settings").once("value")
+        console.log("Host attempting to start the game");
+        
+        // Visually indicate we're processing
+        const startGameBtn = document.getElementById("start-game-btn");
+        if (startGameBtn) {
+            startGameBtn.textContent = "Starting...";
+            startGameBtn.disabled = true;
+        }
+        
+        // Check if all players who have selected a character
+        this.playersRef.once("value")
             .then(snapshot => {
-                const settings = snapshot.val();
+                const players = snapshot.val();
+                console.log("Players before game start:", players);
                 
-                // Load and shuffle questions
-                const questions = questionSets[settings.questionSet][settings.difficulty];
-                const shuffledQuestions = [...questions].sort(() => Math.random() - 0.5);
+                // Only check if players have selected characters if we're beyond character selection
+                // At this point we only care if there are enough players
+                const playerCount = Object.keys(players).length;
+                if (playerCount < 2) {
+                    console.log("Not enough players to start game");
+                    this.showToast("At least 2 players are required to start the game.", "warning");
+                    
+                    // Reset button
+                    if (startGameBtn) {
+                        startGameBtn.textContent = "Start Game";
+                        startGameBtn.disabled = false;
+                    }
+                    return;
+                }
                 
-                // Store question indices in the game
-                this.gameRef.child("questions").set(shuffledQuestions);
+                console.log("Sufficient players to start game, proceeding...");
                 
-                // Update game status to playing
-                this.gameRef.child("status").set("playing");
-                this.gameRef.child("currentQuestion").set(0);
-                this.gameRef.child("startedAt").set(firebase.database.ServerValue.TIMESTAMP);
+                // Get game settings
+                this.gameRef.child("settings").once("value")
+                    .then(snapshot => {
+                        const settings = snapshot.val();
+                        
+                        // Load and shuffle questions
+                        const questions = questionSets[settings.questionSet][settings.difficulty];
+                        const shuffledQuestions = [...questions].sort(() => Math.random() - 0.5);
+                        
+                        console.log("Questions loaded and shuffled");
+                        
+                        // Store question indices in the game
+                        this.gameRef.child("questions").set(shuffledQuestions)
+                            .then(() => {
+                                console.log("Questions saved to Firebase");
+                                
+                                // Update all players to reset character selection
+                                const playerUpdates = {};
+                                Object.keys(players).forEach(playerId => {
+                                    playerUpdates[`players/${playerId}/character`] = "";
+                                    playerUpdates[`players/${playerId}/answered`] = false;
+                                });
+                                
+                                // Update game status to playing and reset other game state
+                                const updates = {
+                                    ...playerUpdates,
+                                    "status": "playing",
+                                    "currentQuestion": 0,
+                                    "startedAt": firebase.database.ServerValue.TIMESTAMP
+                                };
+                                
+                                this.gameRef.update(updates)
+                                    .then(() => {
+                                        console.log("Game successfully started, status updated to 'playing'");
+                                        
+                                        // The status change should trigger handleGameStart in all clients
+                                        // But let's also call it directly for the host
+                                        this.handleGameStart();
+                                    })
+                                    .catch(error => {
+                                        console.error("Error updating game status:", error);
+                                        this.showToast("Error starting game. Please try again.", "error");
+                                        
+                                        // Reset button
+                                        if (startGameBtn) {
+                                            startGameBtn.textContent = "Start Game";
+                                            startGameBtn.disabled = false;
+                                        }
+                                    });
+                            })
+                            .catch(error => {
+                                console.error("Error saving questions:", error);
+                                this.showToast("Error starting game. Please try again.", "error");
+                                
+                                // Reset button
+                                if (startGameBtn) {
+                                    startGameBtn.textContent = "Start Game";
+                                    startGameBtn.disabled = false;
+                                }
+                            });
+                    })
+                    .catch(error => {
+                        console.error("Error getting game settings:", error);
+                        this.showToast("Error starting game. Please try again.", "error");
+                        
+                        // Reset button
+                        if (startGameBtn) {
+                            startGameBtn.textContent = "Start Game";
+                            startGameBtn.disabled = false;
+                        }
+                    });
             })
             .catch(error => {
-                console.error("Error starting game:", error);
+                console.error("Error checking players:", error);
                 this.showToast("Error starting game. Please try again.", "error");
+                
+                // Reset button
+                if (startGameBtn) {
+                    startGameBtn.textContent = "Start Game";
+                    startGameBtn.disabled = false;
+                }
             });
     },
     
     // Handle the game starting
     handleGameStart: function() {
-        // Transition to character selection for all players
-        showScreen("character-select-screen");
+        console.log("handleGameStart called - transitioning to character selection");
         
-        // Update event listeners for character selection
-        const characters = document.querySelectorAll(".character");
-        characters.forEach(char => {
-            char.addEventListener("click", () => {
-                const character = char.dataset.character;
-                this.selectCharacter(character);
+        try {
+            // Make sure we're in multiplayer mode
+            state.game.isMultiplayer = true;
+            
+            // Transition to character selection screen
+            if (window.showScreen) {
+                console.log("Calling showScreen('character-select-screen')");
+                window.showScreen("character-select-screen");
+            } else {
+                console.error("showScreen function not available");
+                alert("Error: Cannot navigate to character selection. Please refresh the page.");
+                return;
+            }
+            
+            // Add multiplayer indicator to character selection screen
+            const characterScreen = document.getElementById("character-select-screen");
+            if (characterScreen) {
+                // Remove any existing multiplayer indicator
+                const existingIndicator = document.getElementById("mp-character-indicator");
+                if (existingIndicator) {
+                    existingIndicator.remove();
+                }
+                
+                // Add new indicator
+                const mpIndicator = document.createElement("div");
+                mpIndicator.id = "mp-character-indicator";
+                mpIndicator.style.backgroundColor = "#4a3aff";
+                mpIndicator.style.color = "white";
+                mpIndicator.style.padding = "10px";
+                mpIndicator.style.textAlign = "center";
+                mpIndicator.style.borderRadius = "5px";
+                mpIndicator.style.margin = "10px 0";
+                mpIndicator.style.fontWeight = "bold";
+                mpIndicator.textContent = "MULTIPLAYER GAME - Select Your Character";
+                
+                // Insert at the beginning of the screen
+                if (characterScreen.firstChild) {
+                    characterScreen.insertBefore(mpIndicator, characterScreen.firstChild);
+                } else {
+                    characterScreen.appendChild(mpIndicator);
+                }
+            }
+            
+            // Update event listeners for character selection
+            console.log("Setting up character click handlers");
+            const characters = document.querySelectorAll(".character");
+            characters.forEach(char => {
+                // Remove any existing click listeners
+                const newChar = char.cloneNode(true);
+                char.parentNode.replaceChild(newChar, char);
+                
+                // Add new click listener
+                newChar.addEventListener("click", () => {
+                    const character = newChar.dataset.character;
+                    console.log("Character clicked:", character);
+                    this.selectCharacter(character);
+                });
             });
-        });
+        } catch (error) {
+            console.error("Error in handleGameStart:", error);
+            alert("An error occurred starting the game. See console for details.");
+        }
     },
     
     // Select a character in multiplayer mode
     selectCharacter: function(character) {
+        console.log("Selecting character in multiplayer mode:", character);
+        
         // Update character in Firebase
         this.gameRef.child(`players/${this.userId}/character`).set(character)
             .then(() => {
-                console.log("Character selected:", character);
+                console.log("Character selection saved to Firebase");
                 
-                // Start the quiz
-                this.prepareMultiplayerQuiz();
+                // Show visual confirmation
+                document.querySelectorAll(".character").forEach(char => {
+                    if (char.dataset.character === character) {
+                        char.style.border = "5px solid gold";
+                    } else {
+                        char.style.border = "none";
+                    }
+                });
+                
+                // Add waiting message
+                const characterScreen = document.getElementById("character-select-screen");
+                if (characterScreen) {
+                    let waitingMsg = document.getElementById("character-waiting-msg");
+                    if (!waitingMsg) {
+                        waitingMsg = document.createElement("div");
+                        waitingMsg.id = "character-waiting-msg";
+                        waitingMsg.style.backgroundColor = "#38b2ac";
+                        waitingMsg.style.color = "white";
+                        waitingMsg.style.padding = "10px";
+                        waitingMsg.style.textAlign = "center";
+                        waitingMsg.style.borderRadius = "5px";
+                        waitingMsg.style.margin = "10px 0";
+                        characterScreen.appendChild(waitingMsg);
+                    }
+                    waitingMsg.textContent = "Character selected! Waiting for other players...";
+                }
+                
+                // Prepare for multiplayer quiz
+                this.checkAllPlayersReady();
             })
             .catch(error => {
                 console.error("Error selecting character:", error);
+                alert("Error selecting character. Please try again.");
+            });
+    },
+    
+    // Check if all players have selected characters
+    checkAllPlayersReady: function() {
+        console.log("Checking if all players have selected characters");
+        
+        this.playersRef.once("value")
+            .then(snapshot => {
+                const players = snapshot.val();
+                console.log("Current players:", players);
+                
+                const allReady = Object.values(players).every(player => player.character);
+                console.log("All players ready:", allReady);
+                
+                if (allReady) {
+                    console.log("All players have selected characters, proceeding to game");
+                    this.prepareMultiplayerQuiz();
+                } else {
+                    console.log("Waiting for all players to select characters");
+                    
+                    // If host, show which players haven't selected
+                    if (this.isHost) {
+                        const notReady = Object.entries(players)
+                            .filter(([_, player]) => !player.character)
+                            .map(([_, player]) => player.name);
+                            
+                        console.log("Players not ready:", notReady);
+                        
+                        // Update waiting message with names
+                        const waitingMsg = document.getElementById("character-waiting-msg");
+                        if (waitingMsg) {
+                            waitingMsg.innerHTML = `Waiting for players to select characters: <br>${notReady.join(", ")}`;
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error("Error checking player readiness:", error);
             });
     },
     
