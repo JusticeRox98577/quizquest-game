@@ -1,5 +1,6 @@
 // Question data sets
-const questionSets = {
+// Make questionSets globally accessible for multiplayer
+window.questionSets = {
     general: {
         easy: [
             {
