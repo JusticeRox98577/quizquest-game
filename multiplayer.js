@@ -455,11 +455,53 @@ const multiplayer = {
                     throw new Error("Game settings not found");
                 }
                 
+                console.log("Game settings:", settings);
+                
+                // Check if questionSets exists in window or as a global variable
+                let questionSets;
+                if (typeof window.questionSets !== 'undefined') {
+                    questionSets = window.questionSets;
+                    console.log("Using window.questionSets");
+                } else if (typeof questionSets !== 'undefined') {
+                    // Try to access it as a global variable
+                    console.log("Using global questionSets variable");
+                } else {
+                    // If all else fails, try to find it through script tag extraction
+                    console.log("Question sets not found in expected locations, trying to extract from script tag");
+                    const scriptTag = document.querySelector('script[src*="questions.js"]');
+                    if (!scriptTag) {
+                        throw new Error("Cannot find question sets. Make sure questions.js is loaded before multiplayer.js");
+                    }
+                    
+                    // Create a new script tag to reload questions.js and set a callback
+                    const newScript = document.createElement('script');
+                    newScript.src = scriptTag.src;
+                    newScript.onload = () => {
+                        // Try again after reloading
+                        this.startGame();
+                    };
+                    document.head.appendChild(newScript);
+                    return Promise.reject(new Error("Reloading questions.js"));
+                }
+                
+                // Check the structure of question sets
+                console.log("Question sets categories:", Object.keys(questionSets));
+                
                 // Get questions for the selected category and difficulty
-                const questions = window.questionSets[settings.questionSet][settings.difficulty];
+                if (!questionSets[settings.questionSet]) {
+                    throw new Error(`Question set "${settings.questionSet}" not found. Available sets: ${Object.keys(questionSets).join(', ')}`);
+                }
+                
+                if (!questionSets[settings.questionSet][settings.difficulty]) {
+                    throw new Error(`Difficulty "${settings.difficulty}" not found in question set "${settings.questionSet}"`);
+                }
+                
+                const questions = questionSets[settings.questionSet][settings.difficulty];
                 if (!questions || !questions.length) {
                     throw new Error("No questions found for selected category/difficulty");
                 }
+                
+                console.log(`Found ${questions.length} questions for ${settings.questionSet}/${settings.difficulty}`);
                 
                 // Shuffle questions
                 const shuffledQuestions = [...questions].sort(() => Math.random() - 0.5);
